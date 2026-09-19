@@ -1,10 +1,90 @@
-This is a rewrite of [fdired](https://github.com/Simar-malhotra09/fdired.git) in rust, because ofcourse!
+Okay, finally some clarity.
 
+The goal is to capture some 'text', from stdin, stdout, and stderr, parse it for valid filepaths,
+and render the full text for each, split per line, where you use j/k/gg/G to navigate and on click `Enter` key
+it opens the file present in that line with a configureable editor (nvim by default).
+In case a line contains multiple valid filepaths, use `Tab` to switch selecting between them.
+
+This borrows from the idea of [fdired](https://github.com/Simar-malhotra09/fdired.git), but instead of
+limiting ourselves to output grep/rg/find/fd, this should, in theory, work with any arbitrary text,
+whether is piped in (stdin), or cmds are passed to the binary as args (it spawns process to run the passed
+args as is, and captures stdout and stderr.)
+
+Concretely, usage with stdin could look like:
+(Obviously this will be a TUI, but the principle is the same)
+`find ~/Desktop/slides/base_imgs -maxdepth 1 -type f | ./target/debug/greo`
+
+```
+STDIN
+Matches:
+  /Users/0saker/Desktop/code/tem-particle-seg/slides/base_imgs/amal-0007.tif:-:-
+  /Users/0saker/Desktop/code/tem-particle-seg/slides/base_imgs/low-contrast-0018.png:-:-
+  /Users/0saker/Desktop/code/tem-particle-seg/slides/base_imgs/contam-0003.tif:-:-
+
+STDOUT
+Matches:
+
+STDERR
+Matches:
+```
+
+Concretely, usage with stdout could look like:
+(Obviously this will be a TUI, but the principle is the same)
+
+`cargo run grep -r "main" tests/fixtures/`
+
+```
+STDIN
+Matches:
+
+STDOUT
+Matches:
+  tests/fixtures/mixed_multiline.txt:-:-
+  src/main.rs:42:-
+  tests/fixtures/path_with_line_number.txt:-:-
+
+STDERR
+Matches:
+```
+
+Concretely, usage with stderr could look like:
+(Obviously this will be a TUI, but the principle is the same)
+
+```
+❯ cargo b
+   Compiling temp v0.1.0 (/Users/0saker/Desktop/code/probe/fdrs/greo/temp)
+error: expected type, found `,`
+  --> src/main.rs:10:11
+   |
+ 9 | struct PathMatch {
+   |        --------- while parsing this struct
+10 |     path: ,
+   |           ^ expected type
+
+error: could not compile `temp` (bin "temp") due to 1 previous error
+```
+
+`../target/debug/greo cargo b`
+
+```
+Command: cargo b
+STDIN
+Matches:
+
+STDOUT
+Matches:
+
+STDERR
+Matches:
+  src/main.rs:10:11
+```
+
+Okay this is incomprehensible
+~~This is a rewrite of [fdired](https://github.com/Simar-malhotra09/fdired.git) in rust, because ofcourse!
 Jokes aside, I was a little tired of how slow the progress was in C because of all the damn bug I tended to introduce with every commit,
 and honestly, I couldn't be arsed to learn how to properly use a debugger at the moment.
-
 Indeed, this project is also stained by the same human sloppness I excreated over at the C version; that, while still useable, will be archived soon.
-Below is the readme of it for no reason other than to toot my own horn.
+Below is the readme of it for no reason other than to toot my own horn.~~
 
 What else mmhh.. I'm kind of craving a sweet treat rn.
 
