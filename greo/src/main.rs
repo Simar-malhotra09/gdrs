@@ -1,18 +1,53 @@
 use regex::Regex;
 use std::borrow::Cow;
+use std::fmt;
 use std::io::{self, IsTerminal, Read};
 use std::path::Path;
 use std::process::Command;
 use std::sync::LazyLock;
 
-#[derive(Debug, PartialEq, Eq)]
 #[allow(dead_code)]
+struct Packed {
+    content: String,
+    matches: Vec<PathMatch>,
+}
+
+impl fmt::Display for Packed {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // writeln!(f, "Content:\n{}", self.content)?;
+        writeln!(f, "Matches:")?;
+
+        for m in &self.matches {
+            writeln!(f, "  {m}")?;
+        }
+
+        Ok(())
+    }
+}
+struct Output {
+    o_stdin: Packed,
+    o_stdout: Packed,
+    o_stderr: Packed,
+}
+
+#[derive(Debug, PartialEq, Eq)]
 struct PathMatch {
     path: String,
     line_num: Option<u32>,
     col_num: Option<u32>,
     start: usize,
     end: usize,
+}
+impl fmt::Display for PathMatch {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}:{}:{}",
+            self.path,
+            self.line_num.map_or("-".to_string(), |n| n.to_string()),
+            self.col_num.map_or("-".to_string(), |n| n.to_string()),
+        )
+    }
 }
 
 #[allow(dead_code)]
@@ -91,9 +126,15 @@ fn extract_path_matches(input: &str) -> Vec<PathMatch> {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut text = String::new();
+    let mut i_stdin = String::new();
+    let mut i_stdout = String::new();
+    let mut i_stderr = String::new();
+    // let mut cmd_output = Output {
+    //     stdout: String::new(),
+    //     stderr: String::new(),
+    // };
     if !io::stdin().is_terminal() {
-        io::stdin().read_to_string(&mut text).unwrap();
+        io::stdin().read_to_string(&mut i_stdin).unwrap();
     } else {
         let args: Vec<String> = std::env::args().skip(1).collect();
         let Some((command, command_args)) = args.split_first() else {
@@ -114,19 +155,28 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Err(e) => return Err(e.into()),
         };
 
-        // text = &output.stdout.to_mut().to_string();
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        text = stdout.to_string();
-        // stdout.read_to_string(&mut text).unwrap();
+        i_stdout = String::from_utf8_lossy(&output.stdout).into_owned();
+        i_stderr = String::from_utf8_lossy(&output.stderr).into_owned();
+        // cmd_output.stdout = stdout;
+        // cmd_output.stderr = stderr;
     }
-
-    let res: Vec<PathMatch> = extract_path_matches(text.as_str());
-    for r in res {
-        println!(
-            "Path is: {}, line num: {:?}, col num: {:?}",
-            r.path, r.line_num, r.col_num
-        );
-    }
+    let output = Output {
+        o_stdin: Packed {
+            matches: extract_path_matches(&i_stdin),
+            content: i_stdin,
+        },
+        o_stdout: Packed {
+            matches: extract_path_matches(&i_stdout),
+            content: i_stdout,
+        },
+        o_stderr: Packed {
+            matches: extract_path_matches(&i_stderr),
+            content: i_stderr,
+        },
+    };
+    println!("STDIN\n{}", output.o_stdin);
+    println!("STDOUT\n{}", output.o_stdout);
+    println!("STDERR\n{}", output.o_stderr);
 
     Ok(())
 }
