@@ -1,6 +1,7 @@
 use core::fmt;
 use regex::Regex;
 use std::borrow::Cow;
+use std::io::{self, IsTerminal, Read};
 use std::path::Path;
 use std::process::Command;
 use std::sync::LazyLock;
@@ -139,39 +140,40 @@ fn extract_path_matches(input: &str) -> Vec<PathMatch> {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let args: Vec<String> = std::env::args().skip(1).collect();
-    let rest = match args.first().map(String::as_str) {
-        Some("--") => &args[1..],
-        _ => &args[..],
-    };
-    let Some((command, command_args)) = rest.split_first() else {
-        eprintln!("usage: greo [--] <command> [args...]");
-        std::process::exit(2);
-    };
+    let mut text = String::new();
+    if !io::stdin().is_terminal() {
+        io::stdin().read_to_string(&mut text).unwrap();
+    } else {
+        let args: Vec<String> = std::env::args().skip(1).collect();
+        let Some((command, command_args)) = args.split_first() else {
+            eprintln!("usage: greo [--] <command> [args...]");
+            std::process::exit(2);
+        };
+        let mut cmd = Command::new(command);
+        cmd.args(command_args);
 
-    let mut cmd = Command::new(command);
-    cmd.args(command_args);
+        println!("Command: {} {}", command, command_args.join(" "));
 
-    println!("Command: {:?}", cmd);
+        let output = match cmd.output() {
+            Ok(output) => output,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                eprintln!("greo: command not found: {command}");
+                std::process::exit(127);
+            }
+            Err(e) => return Err(e.into()),
+        };
 
-    let output = match cmd.output() {
-        Ok(output) => output,
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-            eprintln!("greo: command not found: {command}");
-            std::process::exit(127);
-        }
-        Err(e) => return Err(e.into()),
-    };
+        // text = &output.stdout.to_mut().to_string();
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        text = stdout.to_string();
+        // stdout.read_to_string(&mut text).unwrap();
+    }
 
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let split_output = split_result(&stdout);
-    let search_results: Vec<SearchResult> = parse_result(split_output.as_slice());
-    for sr in search_results {
+    let res: Vec<PathMatch> = extract_path_matches(text.as_str());
+    for r in res {
         println!(
-            "{}, {}, {}",
-            sr.file_path.unwrap(),
-            sr.line_num.unwrap(),
-            sr.contents
+            "Path is: {}, line num: {:?}, col num: {:?}",
+            r.path, r.line_num, r.col_num
         );
     }
 
