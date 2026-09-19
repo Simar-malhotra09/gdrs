@@ -1,0 +1,2 @@
+src/main.rs:some content
+Cargo.toml:15:[package]
