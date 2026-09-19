@@ -80,6 +80,7 @@ Matches:
 ```
 
 Okay this is incomprehensible
+
 ~~This is a rewrite of [fdired](https://github.com/Simar-malhotra09/fdired.git) in rust, because ofcourse!
 Jokes aside, I was a little tired of how slow the progress was in C because of all the damn bug I tended to introduce with every commit,
 and honestly, I couldn't be arsed to learn how to properly use a debugger at the moment.
