@@ -1,58 +1,9 @@
-use core::fmt;
 use regex::Regex;
 use std::borrow::Cow;
 use std::io::{self, IsTerminal, Read};
 use std::path::Path;
 use std::process::Command;
 use std::sync::LazyLock;
-
-struct SearchResult<'a> {
-    file_path: Option<&'a str>,
-    line_num: Option<u32>,
-    contents: &'a str,
-}
-
-impl<'a> fmt::Display for SearchResult<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(
-            f,
-            "{}:{}:{}\n",
-            self.file_path.unwrap(),
-            self.line_num.unwrap(),
-            self.contents,
-        )
-    }
-}
-
-fn split_result(output: &str) -> Vec<&str> {
-    output.lines().collect()
-}
-
-fn parse_result<'a>(split_output: &[&'a str]) -> Vec<SearchResult<'a>> {
-    let mut res = Vec::new();
-
-    for so in split_output {
-        let Some((file_path, rest)) = so.split_once(':') else {
-            continue;
-        };
-
-        let Some((line_num, contents)) = rest.split_once(':') else {
-            continue;
-        };
-
-        let Ok(line_num) = line_num.parse::<u32>() else {
-            continue;
-        };
-
-        res.push(SearchResult {
-            file_path: Some(file_path),
-            line_num: Some(line_num),
-            contents,
-        });
-    }
-
-    res
-}
 
 #[derive(Debug, PartialEq, Eq)]
 #[allow(dead_code)]
