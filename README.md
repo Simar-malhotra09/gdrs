@@ -3,15 +3,17 @@ Okay, finally some clarity.
 The goal is to capture some 'text', from stdin, stdout, and stderr, parse it for valid filepaths,
 and render the full text for each, split per line, where you use j/k/gg/G to navigate and on click `Enter` key
 it opens the file present in that line with a configureable editor (nvim by default).
+
 In case a line contains multiple valid filepaths, use `Tab` to switch selecting between them.
 
 This borrows from the idea of [fdired](https://github.com/Simar-malhotra09/fdired.git), but instead of
-limiting ourselves to output grep/rg/find/fd, this should, in theory, work with any arbitrary text,
-whether is piped in (stdin), or cmds are passed to the binary as args (it spawns process to run the passed
-args as is, and captures stdout and stderr.)
+limiting ourselves to output of grep/rg/find/fd, this should, in theory, work with any arbitrary text,
+whether it is piped in (stdin), or cmds are passed to the binary as args (it spawns a process to run the passed
+args as is, and captures the stdout and stderr.)
 
 Concretely, usage with stdin could look like:
 (Obviously this will be a TUI, but the principle is the same)
+
 `find ~/Desktop/slides/base_imgs -maxdepth 1 -type f | ./target/debug/greo`
 
 ```
@@ -31,7 +33,7 @@ Matches:
 Concretely, usage with stdout could look like:
 (Obviously this will be a TUI, but the principle is the same)
 
-`cargo run grep -r "main" tests/fixtures/`
+`./target/debug/greo grep -r "main" tests/fixtures/`
 
 ```
 STDIN
@@ -49,6 +51,8 @@ Matches:
 
 Concretely, usage with stderr could look like:
 (Obviously this will be a TUI, but the principle is the same)
+
+(Stderr shows which file fails to compile)
 
 ```
 ❯ cargo b
