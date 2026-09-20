@@ -1,4 +1,3 @@
-use color_eyre::owo_colors::colors::Default;
 use regex::Regex;
 use std::borrow::Cow;
 use std::fmt;
@@ -28,9 +27,9 @@ impl fmt::Display for Packed {
 }
 #[derive(Default)]
 pub struct Output {
-    pub o_stdin: Packed,
+    // pub o_stdin: Packed,
     pub o_stdout: Packed,
-    pub o_stderr: Packed,
+    // pub o_stderr: Packed,
 }
 
 #[derive(Debug, PartialEq, Eq)]

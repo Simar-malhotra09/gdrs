@@ -11,7 +11,7 @@ use ratatui::widgets::{
 };
 use ratatui::{DefaultTerminal, symbols};
 
-use ders::Output;
+use ders::{Output, PathMatch};
 
 const TODO_HEADER_STYLE: Style = Style::new().fg(SLATE.c100).bg(BLUE.c800);
 const NORMAL_ROW_BG: Color = SLATE.c950;
@@ -31,12 +31,7 @@ struct App {
     content: OutputState,
 }
 
-// wrapper around output so we know what the state is
-// Keeping track of the state lets us render the
-// associated widget with its state and have access to features such as natural scrolling.
-// Check the event handling at the bottom to see how to change the state on incoming events. Check
-// the drawing logic for items on how to specify the highlighting style for selected items.
-
+#[derive(Default)]
 struct OutputState {
     output: Output,
     state: ListState,
@@ -44,9 +39,9 @@ struct OutputState {
 
 #[derive(Debug)]
 enum Tabs {
-    Stdin,
+    // Stdin,
     Stdout,
-    Stderr,
+    // Stderr,
 }
 
 impl Default for App {
@@ -54,64 +49,31 @@ impl Default for App {
         Self {
             should_exit: false,
             current_tab: Tabs::Stdout,
-            content: O
-
-            todo_list: TodoList::from_iter([
-                (
-                    Status::Todo,
-                    "Rewrite everything with Rust!",
-                    "I can't hold my inner voice. He tells me to rewrite the complete universe with Rust",
-                ),
-                (
-                    Status::Completed,
-                    "Rewrite all of your tui apps with Ratatui",
-                    "Yes, you heard that right. Go and replace your tui with Ratatui.",
-                ),
-                (
-                    Status::Todo,
-                    "Pet your cat",
-                    "Minnak loves to be pet by you! Don't forget to pet and give some treats!",
-                ),
-                (
-                    Status::Todo,
-                    "Walk with your dog",
-                    "Max is bored, go walk with him!",
-                ),
-                (
-                    Status::Completed,
-                    "Pay the bills",
-                    "Pay the train subscription!!!",
-                ),
-                (
-                    Status::Completed,
-                    "Refactor list example",
-                    "If you see this info that means I completed this task!",
-                ),
-            ]),
+            content: OutputState::default(),
         }
     }
 }
 
-impl FromIterator<(Status, &'static str, &'static str)> for TodoList {
-    fn from_iter<I: IntoIterator<Item = (Status, &'static str, &'static str)>>(iter: I) -> Self {
-        let items = iter
-            .into_iter()
-            .map(|(status, todo, info)| TodoItem::new(status, todo, info))
-            .collect();
-        let state = ListState::default();
-        Self { items, state }
-    }
-}
+// impl FromIterator<(Status, &'static str, &'static str)> for TodoList {
+//     fn from_iter<I: IntoIterator<Item = (Status, &'static str, &'static str)>>(iter: I) -> Self {
+//         let items = iter
+//             .into_iter()
+//             .map(|(status, todo, info)| TodoItem::new(status, todo, info))
+//             .collect();
+//         let state = ListState::default();
+//         Self { items, state }
+//     }
+// }
 
-impl TodoItem {
-    fn new(status: Status, todo: &str, info: &str) -> Self {
-        Self {
-            status,
-            todo: todo.to_string(),
-            info: info.to_string(),
-        }
-    }
-}
+// impl TodoItem {
+//     fn new(status: Status, todo: &str, info: &str) -> Self {
+//         Self {
+//             status,
+//             todo: todo.to_string(),
+//             info: info.to_string(),
+//         }
+//     }
+// }
 
 impl App {
     fn run(mut self, terminal: &mut DefaultTerminal) -> Result<()> {
@@ -127,45 +89,43 @@ impl App {
     fn handle_key(&mut self, key: KeyEvent) {
         match key.code {
             KeyCode::Char('q') | KeyCode::Esc => self.should_exit = true,
-            KeyCode::Char('h') | KeyCode::Left => self.select_none(),
+            // KeyCode::Char('h') | KeyCode::Left => self.select_tab_next(),
+            // KeyCode::Char('l') | KeyCode::Right => self.select_tab_prev(),
             KeyCode::Char('j') | KeyCode::Down => self.select_next(),
-            KeyCode::Char('k') | KeyCode::Up => self.select_previous(),
+            KeyCode::Char('k') | KeyCode::Up => self.select_prev(),
             KeyCode::Char('g') | KeyCode::Home => self.select_first(),
             KeyCode::Char('G') | KeyCode::End => self.select_last(),
-            KeyCode::Char('l') | KeyCode::Right | KeyCode::Enter => {
-                self.toggle_status();
+            KeyCode::Enter => {
+                self.edit_file();
             }
             _ => {}
         }
     }
 
-    const fn select_none(&mut self) {
-        self.todo_list.state.select(None);
+    fn edit_file(&mut self) {
+        self.select_first();
     }
 
+    // fn select_tab_next(&mut self) {
+    //     self.todo_list.state.select_next();
+    // }
+    // fn select_tab_prev(&mut self) {
+    //     self.todo_list.state.select_previous();
+    // }
+
     fn select_next(&mut self) {
-        self.todo_list.state.select_next();
+        self.content.state.select_next();
     }
-    fn select_previous(&mut self) {
-        self.todo_list.state.select_previous();
+    fn select_prev(&mut self) {
+        self.content.state.select_previous();
     }
 
     const fn select_first(&mut self) {
-        self.todo_list.state.select_first();
+        self.content.state.select_first();
     }
 
     const fn select_last(&mut self) {
-        self.todo_list.state.select_last();
-    }
-
-    /// Changes the status of the selected list item
-    fn toggle_status(&mut self) {
-        if let Some(i) = self.todo_list.state.selected() {
-            self.todo_list.items[i].status = match self.todo_list.items[i].status {
-                Status::Completed => Status::Todo,
-                Status::Todo => Status::Completed,
-            }
-        }
+        self.content.state.select_last();
     }
 }
 
@@ -191,7 +151,7 @@ impl Widget for &mut App {
 /// Rendering logic for the app
 impl App {
     fn render_header(area: Rect, buf: &mut Buffer) {
-        Paragraph::new("Ratatui Todo List Example")
+        Paragraph::new("Showing only stdout for now! ")
             .bold()
             .centered()
             .render(area, buf);
@@ -205,23 +165,36 @@ impl App {
 
     fn render_list(&mut self, area: Rect, buf: &mut Buffer) {
         let block = Block::new()
-            .title(Line::raw("TODO List").centered())
+            .title(Line::raw("This list is only showing matches for stdout!").centered())
             .borders(Borders::TOP)
             .border_set(symbols::border::EMPTY)
             .border_style(TODO_HEADER_STYLE)
             .bg(NORMAL_ROW_BG);
 
-        // Iterate through all elements in the `items` and stylize them.
         let items: Vec<ListItem> = self
-            .todo_list
-            .items
+            .content
+            .output
+            .o_stdout
+            .matches
             .iter()
             .enumerate()
-            .map(|(i, todo_item)| {
-                let color = alternate_colors(i);
-                ListItem::from(todo_item).bg(color)
+            .map(|(idx, path_match_item)| {
+                let color = alternate_colors(idx);
+                ListItem::from(path_match_item).bg(color)
             })
             .collect();
+
+        // Iterate through all elements in the `items` and stylize them.
+        // let items: Vec<ListItem> = self
+        //     .todo_list
+        //     .items
+        //     .iter()
+        //     .enumerate()
+        //     .map(|(i, todo_item)| {
+        //         let color = alternate_colors(i);
+        //         ListItem::from(todo_item).bg(color)
+        //     })
+        //     .collect();
 
         // Create a List from all list items and highlight the currently selected one
         let list = List::new(items)
@@ -232,7 +205,7 @@ impl App {
 
         // We need to disambiguate this trait method as both `Widget` and `StatefulWidget` share the
         // same method name `render`.
-        StatefulWidget::render(list, area, buf, &mut self.todo_list.state);
+        StatefulWidget::render(list, area, buf, &mut self.content.state);
     }
 
     fn render_selected_item(&self, area: Rect, buf: &mut Buffer) {
