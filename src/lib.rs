@@ -4,6 +4,8 @@ use std::fmt;
 // use std::io::{self, IsTerminal, Read};
 use std::path::Path;
 // use std::process::Command;
+use ratatui::text::Line;
+use ratatui::widgets::ListItem;
 use std::sync::LazyLock;
 
 #[allow(dead_code)]
@@ -126,6 +128,28 @@ pub fn extract_path_matches(input: &str) -> Vec<PathMatch> {
         });
     }
     matches
+}
+
+impl From<&PathMatch> for ListItem<'_> {
+    fn from(value: &PathMatch) -> Self {
+        let path = value.path.clone();
+        let line_num = if value.line_num.is_some() {
+            value.line_num.unwrap().to_string()
+        } else {
+            "-".to_string()
+        };
+        let col_num = if value.col_num.is_some() {
+            value.col_num.unwrap().to_string()
+        } else {
+            "-".to_string()
+        };
+
+        let line = Line::styled(
+            format!("Path: {}, Line: {}, Col: {}", path, line_num, col_num,),
+            TEXT_FG_COLOR,
+        );
+        ListItem::new(line)
+    }
 }
 
 // fn main() -> Result<(), Box<dyn std::error::Error>> {

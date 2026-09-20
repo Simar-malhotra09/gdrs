@@ -208,33 +208,33 @@ impl App {
         StatefulWidget::render(list, area, buf, &mut self.content.state);
     }
 
-    fn render_selected_item(&self, area: Rect, buf: &mut Buffer) {
-        // We get the info depending on the item's state.
-        let info = if let Some(i) = self.todo_list.state.selected() {
-            match self.todo_list.items[i].status {
-                Status::Completed => format!("✓ DONE: {}", self.todo_list.items[i].info),
-                Status::Todo => format!("☐ TODO: {}", self.todo_list.items[i].info),
-            }
-        } else {
-            "Nothing selected...".to_string()
-        };
-
-        // We show the list item's info under the list in this paragraph
-        let block = Block::new()
-            .title(Line::raw("TODO Info").centered())
-            .borders(Borders::TOP)
-            .border_set(symbols::border::EMPTY)
-            .border_style(TODO_HEADER_STYLE)
-            .bg(NORMAL_ROW_BG)
-            .padding(Padding::horizontal(1));
-
-        // We can now render the item info
-        Paragraph::new(info)
-            .block(block)
-            .fg(TEXT_FG_COLOR)
-            .wrap(Wrap { trim: false })
-            .render(area, buf);
-    }
+    // fn render_selected_item(&self, area: Rect, buf: &mut Buffer) {
+    //     // We get the info depending on the item's state.
+    //     let info = if let Some(i) = self.todo_list.state.selected() {
+    //         match self.todo_list.items[i].status {
+    //             Status::Completed => format!("✓ DONE: {}", self.todo_list.items[i].info),
+    //             Status::Todo => format!("☐ TODO: {}", self.todo_list.items[i].info),
+    //         }
+    //     } else {
+    //         "Nothing selected...".to_string()
+    //     };
+    //
+    //     // We show the list item's info under the list in this paragraph
+    //     let block = Block::new()
+    //         .title(Line::raw("TODO Info").centered())
+    //         .borders(Borders::TOP)
+    //         .border_set(symbols::border::EMPTY)
+    //         .border_style(TODO_HEADER_STYLE)
+    //         .bg(NORMAL_ROW_BG)
+    //         .padding(Padding::horizontal(1));
+    //
+    //     // We can now render the item info
+    //     Paragraph::new(info)
+    //         .block(block)
+    //         .fg(TEXT_FG_COLOR)
+    //         .wrap(Wrap { trim: false })
+    //         .render(area, buf);
+    // }
 }
 
 const fn alternate_colors(i: usize) -> Color {
@@ -242,17 +242,5 @@ const fn alternate_colors(i: usize) -> Color {
         NORMAL_ROW_BG
     } else {
         ALT_ROW_BG_COLOR
-    }
-}
-
-impl From<&TodoItem> for ListItem<'_> {
-    fn from(value: &TodoItem) -> Self {
-        let line = match value.status {
-            Status::Todo => Line::styled(format!(" ☐ {}", value.todo), TEXT_FG_COLOR),
-            Status::Completed => {
-                Line::styled(format!(" ✓ {}", value.todo), COMPLETED_TEXT_FG_COLOR)
-            }
-        };
-        ListItem::new(line)
     }
 }
