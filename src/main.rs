@@ -17,8 +17,8 @@ const TODO_HEADER_STYLE: Style = Style::new().fg(SLATE.c100).bg(BLUE.c800);
 const NORMAL_ROW_BG: Color = SLATE.c950;
 const ALT_ROW_BG_COLOR: Color = SLATE.c900;
 const SELECTED_STYLE: Style = Style::new().bg(SLATE.c800).add_modifier(Modifier::BOLD);
-const TEXT_FG_COLOR: Color = SLATE.c200;
-const COMPLETED_TEXT_FG_COLOR: Color = GREEN.c500;
+// const TEXT_FG_COLOR: Color = SLATE.c200;
+// const COMPLETED_TEXT_FG_COLOR: Color = GREEN.c500;
 
 fn main() -> Result<()> {
     color_eyre::install()?;
@@ -138,13 +138,12 @@ impl Widget for &mut App {
         ]);
         let [header_area, content_area, footer_area] = area.layout(&main_layout);
 
-        let content_layout = Layout::vertical([Constraint::Fill(1), Constraint::Fill(1)]);
-        let [list_area, item_area] = content_area.layout(&content_layout);
+        let content_layout = Layout::vertical([Constraint::Fill(1)]);
+        let [list_area] = content_area.layout(&content_layout);
 
         App::render_header(header_area, buf);
         App::render_footer(footer_area, buf);
         self.render_list(list_area, buf);
-        self.render_selected_item(item_area, buf);
     }
 }
 

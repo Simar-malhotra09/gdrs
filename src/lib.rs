@@ -4,9 +4,13 @@ use std::fmt;
 // use std::io::{self, IsTerminal, Read};
 use std::path::Path;
 // use std::process::Command;
+use ratatui::style::Color;
+use ratatui::style::palette::tailwind::SLATE;
 use ratatui::text::Line;
 use ratatui::widgets::ListItem;
 use std::sync::LazyLock;
+
+const TEXT_FG_COLOR: Color = SLATE.c200;
 
 #[allow(dead_code)]
 #[derive(Default)]
