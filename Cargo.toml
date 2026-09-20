@@ -1,5 +1,5 @@
 [package]
-name = "ders"
+name = "fdrs"
 version = "0.1.0"
 description = "Emac's dired for grep/fd"
 authors = ["Simar Malhotra <malhotrasimar009@gmail.com>"]

@@ -10,8 +10,10 @@ use ratatui::widgets::{
     StatefulWidget, Widget, Wrap,
 };
 use ratatui::{DefaultTerminal, symbols};
+use std::io::{self, IsTerminal, Read};
+use std::process::Command;
 
-use ders::{Output, PathMatch};
+use fdrs::{Output, Packed, extract_path_matches};
 
 const TODO_HEADER_STYLE: Style = Style::new().fg(SLATE.c100).bg(BLUE.c800);
 const NORMAL_ROW_BG: Color = SLATE.c950;
@@ -22,7 +24,56 @@ const SELECTED_STYLE: Style = Style::new().bg(SLATE.c800).add_modifier(Modifier:
 
 fn main() -> Result<()> {
     color_eyre::install()?;
-    ratatui::run(|terminal| App::default().run(terminal))
+
+    let mut i_stdin = String::new();
+    let mut i_stdout = String::new();
+    // let mut i_stderr = String::new();
+
+    if !io::stdin().is_terminal() {
+        io::stdin().read_to_string(&mut i_stdin).unwrap();
+    } else {
+        let args: Vec<String> = std::env::args().skip(1).collect();
+        let Some((command, command_args)) = args.split_first() else {
+            eprintln!("usage: greo [--] <command> [args...]");
+            std::process::exit(2);
+        };
+        let mut cmd = Command::new(command);
+        cmd.args(command_args);
+
+        // println!("Command: {} {}", command, command_args.join(" "));
+
+        let output = match cmd.output() {
+            Ok(output) => output,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                eprintln!("greo: command not found: {command}");
+                std::process::exit(127);
+            }
+            Err(e) => return Err(e.into()),
+        };
+
+        i_stdout = String::from_utf8_lossy(&output.stdout).into_owned();
+        // i_stderr = String::from_utf8_lossy(&output.stderr).into_owned();
+    }
+    let output = Output {
+        // o_stdin: Packed {
+        //     matches: extract_path_matches(&i_stdin),
+        //     content: i_stdin,
+        // },
+        o_stdout: Packed {
+            matches: extract_path_matches(&i_stdout),
+            content: i_stdout,
+        },
+        // o_stderr: Packed {
+        //     matches: extract_path_matches(&i_stderr),
+        //     content: i_stderr,
+        // },
+    };
+    // println!("STDIN\n{}", output.o_stdin);
+    // println!("STDOUT\n{}", output.o_stdout);
+    // println!("STDERR\n{}", output.o_stderr);
+
+    // ratatui::run(|terminal| App::default().run(terminal))
+    ratatui::run(|terminal| App::new(output).run(terminal))
 }
 
 struct App {
@@ -50,6 +101,19 @@ impl Default for App {
             should_exit: false,
             current_tab: Tabs::Stdout,
             content: OutputState::default(),
+        }
+    }
+}
+
+impl App {
+    fn new(content: Output) -> Self {
+        Self {
+            should_exit: false,
+            current_tab: Tabs::Stdout,
+            content: OutputState {
+                output: content,
+                state: ListState::default(),
+            },
         }
     }
 }
