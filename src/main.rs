@@ -1,10 +1,3 @@
-/// A Ratatui example that demonstrates how to create a todo list with selectable items.
-///
-/// This example runs with the Ratatui library code in the branch that you are currently
-/// reading. See the [`latest`] branch for the code which works with the most recent Ratatui
-/// release.
-///
-/// [`latest`]: https://github.com/ratatui/ratatui/tree/latest
 use color_eyre::Result;
 use crossterm::event::{self, KeyCode, KeyEvent};
 use ratatui::buffer::Buffer;
@@ -18,6 +11,8 @@ use ratatui::widgets::{
 };
 use ratatui::{DefaultTerminal, symbols};
 
+use ders::Output;
+
 const TODO_HEADER_STYLE: Style = Style::new().fg(SLATE.c100).bg(BLUE.c800);
 const NORMAL_ROW_BG: Color = SLATE.c950;
 const ALT_ROW_BG_COLOR: Color = SLATE.c900;
@@ -30,39 +25,37 @@ fn main() -> Result<()> {
     ratatui::run(|terminal| App::default().run(terminal))
 }
 
-/// This struct holds the current state of the app. In particular, it has the `todo_list` field
-/// which is a wrapper around `ListState`. Keeping track of the state lets us render the
-/// associated widget with its state and have access to features such as natural scrolling.
-///
-/// Check the event handling at the bottom to see how to change the state on incoming events. Check
-/// the drawing logic for items on how to specify the highlighting style for selected items.
 struct App {
     should_exit: bool,
-    todo_list: TodoList,
+    current_tab: Tabs,
+    content: OutputState,
 }
 
-struct TodoList {
-    items: Vec<TodoItem>,
+// wrapper around output so we know what the state is
+// Keeping track of the state lets us render the
+// associated widget with its state and have access to features such as natural scrolling.
+// Check the event handling at the bottom to see how to change the state on incoming events. Check
+// the drawing logic for items on how to specify the highlighting style for selected items.
+
+struct OutputState {
+    output: Output,
     state: ListState,
 }
 
 #[derive(Debug)]
-struct TodoItem {
-    todo: String,
-    info: String,
-    status: Status,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-enum Status {
-    Todo,
-    Completed,
+enum Tabs {
+    Stdin,
+    Stdout,
+    Stderr,
 }
 
 impl Default for App {
     fn default() -> Self {
         Self {
             should_exit: false,
+            current_tab: Tabs::Stdout,
+            content: O
+
             todo_list: TodoList::from_iter([
                 (
                     Status::Todo,

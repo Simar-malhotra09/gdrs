@@ -1,12 +1,13 @@
 use regex::Regex;
 use std::borrow::Cow;
+use std::io::{self, IsTerminal, Read};
 use std::path::Path;
 use std::sync::LazyLock;
 
 #[derive(Debug, PartialEq, Eq)]
 #[allow(dead_code)]
 struct PathMatch {
-    path: String,
+    path: ,
     line_num: Option<u32>,
     col_num: Option<u32>,
     start: usize,
@@ -91,7 +92,26 @@ fn extract_path_matches(input: &str) -> Vec<PathMatch> {
 }
 
 fn main() {
-    println!("Hello, world!");
+    let mut text = String::new();
+    if !io::stdin().is_terminal() {
+        io::stdin().read_to_string(&mut text).unwrap();
+    } else {
+        text = " 
+        This is a file src/main.rs:some content \
+        Cargo.toml:15:[package] \
+        Cargo.toml:15:98[package] \
+        Cargo.toml:15:98:11[package] \
+        "
+        .to_string();
+    }
+
+    let res: Vec<PathMatch> = extract_path_matches(text.as_str());
+    for r in res {
+        println!(
+            "Path is: {}, line num: {:?}, col num: {:?}",
+            r.path, r.line_num, r.col_num
+        );
+    }
 }
 
 #[cfg(test)]
