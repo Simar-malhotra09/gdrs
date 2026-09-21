@@ -1,5 +1,6 @@
 use color_eyre::Result;
 use crossterm::event::{self, KeyCode, KeyEvent};
+use ratatui::DefaultTerminal;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::palette::tailwind::{BLUE, SLATE};
@@ -10,11 +11,10 @@ use ratatui::widgets::{
     Block, Borders, HighlightSpacing, List, ListItem, ListState, Paragraph, StatefulWidget, Tabs,
     Widget,
 };
-use ratatui::DefaultTerminal;
 use std::io::{self, IsTerminal, Read};
 use std::process::Command;
 
-use fdrs::{Output, Packed};
+use cream::{Output, Packed, PathMatch};
 
 const HEADER_STYLE: Style = Style::new().fg(SLATE.c100).bg(BLUE.c800);
 const NORMAL_ROW_BG: Color = SLATE.c950;
@@ -34,14 +34,14 @@ fn main() -> Result<()> {
     } else {
         let args: Vec<String> = std::env::args().skip(1).collect();
         let Some((command, command_args)) = args.split_first() else {
-            eprintln!("usage: greo [--] <command> [args...]");
+            eprintln!("usage: oreo [--] <command> [args...]");
             std::process::exit(2);
         };
 
         let output = match Command::new(command).args(command_args).output() {
             Ok(output) => output,
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-                eprintln!("greo: command not found: {command}");
+                eprintln!("oreo: command not found: {command}");
                 std::process::exit(127);
             }
             Err(e) => return Err(e.into()),
@@ -57,7 +57,11 @@ fn main() -> Result<()> {
         o_stderr: Packed::new(i_stderr),
     };
 
-    let start_tab = if piped { TabKind::Stdin } else { TabKind::Stdout };
+    let start_tab = if piped {
+        TabKind::Stdin
+    } else {
+        TabKind::Stdout
+    };
     ratatui::run(|terminal| App::new(output, start_tab).run(terminal))
 }
 
@@ -199,10 +203,7 @@ impl App {
             .matches
             .iter()
             .enumerate()
-            .map(|(idx, path_match_item)| {
-                let color = alternate_colors(idx);
-                ListItem::from(path_match_item).bg(color)
-            })
+            .map(|(idx, m)| match_item(m).bg(alternate_colors(idx)))
             .collect();
 
         let list = List::new(items)
@@ -213,6 +214,17 @@ impl App {
 
         StatefulWidget::render(list, area, buf, self.current_state());
     }
+}
+
+fn match_item(value: &PathMatch) -> ListItem<'static> {
+    let dash = |n: Option<u32>| n.map_or("-".to_string(), |n| n.to_string());
+    let line = format!(
+        "Path: {}, Line: {}, Col: {}",
+        value.path,
+        dash(value.line_num),
+        dash(value.col_num),
+    );
+    ListItem::new(line).fg(SLATE.c200)
 }
 
 const fn alternate_colors(i: usize) -> Color {

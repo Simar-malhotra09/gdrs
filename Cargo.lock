@@ -218,6 +218,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "cream"
+version = "0.1.0"
+dependencies = [
+ "regex",
+]
+
+[[package]]
 name = "critical-section"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -407,16 +414,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b95f7c0680e4142284cf8b22c14a476e87d61b004a3a0861872b32ef7ead40a2"
 dependencies = [
  "bit-set",
- "regex",
-]
-
-[[package]]
-name = "fdrs"
-version = "0.1.0"
-dependencies = [
- "color-eyre",
- "crossterm",
- "ratatui",
  "regex",
 ]
 
@@ -830,6 +827,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7bb71e1b3fa6ca1c61f383464aaf2bb0e2f8e772a1f01d486832464de363b951"
 dependencies = [
  "num-traits",
+]
+
+[[package]]
+name = "oreo"
+version = "0.1.0"
+dependencies = [
+ "color-eyre",
+ "cream",
+ "crossterm",
+ "ratatui",
 ]
 
 [[package]]

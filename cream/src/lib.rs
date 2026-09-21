@@ -1,19 +1,17 @@
 use regex::Regex;
 use std::borrow::Cow;
 use std::fmt;
-use std::io::{self, IsTerminal, Read};
 use std::path::Path;
-use std::process::Command;
 use std::sync::LazyLock;
 
-#[allow(dead_code)]
-struct Packed {
-    content: String,
-    matches: Vec<PathMatch>,
+#[derive(Default)]
+pub struct Packed {
+    pub content: String,
+    pub matches: Vec<PathMatch>,
 }
 
 impl Packed {
-    fn new(content: String) -> Self {
+    pub fn new(content: String) -> Self {
         let matches = extract_path_matches(&content);
         Self { content, matches }
     }
@@ -31,19 +29,21 @@ impl fmt::Display for Packed {
         Ok(())
     }
 }
-struct Output {
-    o_stdin: Packed,
-    o_stdout: Packed,
-    o_stderr: Packed,
+
+#[derive(Default)]
+pub struct Output {
+    pub o_stdin: Packed,
+    pub o_stdout: Packed,
+    pub o_stderr: Packed,
 }
 
 #[derive(Debug, PartialEq, Eq)]
-struct PathMatch {
-    path: String,
-    line_num: Option<u32>,
-    col_num: Option<u32>,
-    start: usize,
-    end: usize,
+pub struct PathMatch {
+    pub path: String,
+    pub line_num: Option<u32>,
+    pub col_num: Option<u32>,
+    pub start: usize,
+    pub end: usize,
 }
 impl fmt::Display for PathMatch {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -57,10 +57,8 @@ impl fmt::Display for PathMatch {
     }
 }
 
-#[allow(dead_code)]
 const TRAILING_PUNCT: &[char] = &['.', ',', ';', ':', ')', ']', '}', '>', '"', '\'', '!'];
 
-#[allow(dead_code)]
 fn expand_tilde(path: &str) -> Cow<'_, str> {
     match path.strip_prefix("~/") {
         Some(rest) => match std::env::var("HOME") {
@@ -73,7 +71,6 @@ fn expand_tilde(path: &str) -> Cow<'_, str> {
 
 /// Longest prefix of `raw` that names an existing file, after trimming
 /// trailing sentence punctuation the regex can't tell apart from the path.
-#[allow(dead_code)]
 fn validate_path(raw: &str) -> Option<usize> {
     if raw.trim_matches('/').is_empty() {
         return None;
@@ -93,8 +90,7 @@ fn validate_path(raw: &str) -> Option<usize> {
     }
 }
 
-#[allow(dead_code)]
-fn extract_path_matches(input: &str) -> Vec<PathMatch> {
+pub fn extract_path_matches(input: &str) -> Vec<PathMatch> {
     static CANDIDATE: LazyLock<Regex> = LazyLock::new(|| {
         Regex::new(
             r"(?P<path>[^\s:/]*/[^\s:]*|(?:[A-Za-z0-9_+~-]+\.)+[A-Za-z0-9_+~-]+)(?::(?P<line_num>[0-9]+)(?::(?P<col_num>[0-9]+))?)?",
@@ -130,53 +126,6 @@ fn extract_path_matches(input: &str) -> Vec<PathMatch> {
         });
     }
     matches
-}
-
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut i_stdin = String::new();
-    let mut i_stdout = String::new();
-    let mut i_stderr = String::new();
-    // let mut cmd_output = Output {
-    //     stdout: String::new(),
-    //     stderr: String::new(),
-    // };
-    if !io::stdin().is_terminal() {
-        io::stdin().read_to_string(&mut i_stdin).unwrap();
-    } else {
-        let args: Vec<String> = std::env::args().skip(1).collect();
-        let Some((command, command_args)) = args.split_first() else {
-            eprintln!("usage: greo [--] <command> [args...]");
-            std::process::exit(2);
-        };
-        let mut cmd = Command::new(command);
-        cmd.args(command_args);
-
-        println!("Command: {} {}", command, command_args.join(" "));
-
-        let output = match cmd.output() {
-            Ok(output) => output,
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-                eprintln!("greo: command not found: {command}");
-                std::process::exit(127);
-            }
-            Err(e) => return Err(e.into()),
-        };
-
-        i_stdout = String::from_utf8_lossy(&output.stdout).into_owned();
-        i_stderr = String::from_utf8_lossy(&output.stderr).into_owned();
-        // cmd_output.stdout = stdout;
-        // cmd_output.stderr = stderr;
-    }
-    let output = Output {
-        o_stdin: Packed::new(i_stdin),
-        o_stdout: Packed::new(i_stdout),
-        o_stderr: Packed::new(i_stderr),
-    };
-    println!("STDIN\n{}", output.o_stdin);
-    println!("STDOUT\n{}", output.o_stdout);
-    println!("STDERR\n{}", output.o_stderr);
-
-    Ok(())
 }
 
 #[cfg(test)]

@@ -14,7 +14,7 @@ args as is, and captures the stdout and stderr.)
 Concretely, usage with stdin could look like:
 (Obviously this will be a TUI, but the principle is the same)
 
-`find ~/Desktop/slides/base_imgs -maxdepth 1 -type f | ./target/debug/greo`
+`find ~/Desktop/slides/base_imgs -maxdepth 1 -type f | ./target/debug/cream`
 
 ```
 STDIN
@@ -33,7 +33,7 @@ Matches:
 Concretely, usage with stdout could look like:
 (Obviously this will be a TUI, but the principle is the same)
 
-`./target/debug/greo grep -r "main" tests/fixtures/`
+`./target/debug/cream grep -r "main" tests/fixtures/`
 
 ```
 STDIN
@@ -56,7 +56,7 @@ Concretely, usage with stderr could look like:
 
 ```
 ❯ cargo b
-   Compiling temp v0.1.0 (/Users/0saker/Desktop/code/probe/fdrs/greo/temp)
+   Compiling temp v0.1.0 (/Users/0saker/Desktop/code/probe/oreo/cream/temp)
 error: expected type, found `,`
   --> src/main.rs:10:11
    |
@@ -68,7 +68,7 @@ error: expected type, found `,`
 error: could not compile `temp` (bin "temp") due to 1 previous error
 ```
 
-`../target/debug/greo cargo b`
+`../target/debug/cream cargo b`
 
 ```
 Command: cargo b
