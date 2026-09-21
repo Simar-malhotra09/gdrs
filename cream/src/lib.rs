@@ -15,11 +15,32 @@ impl Packed {
         let matches = extract_path_matches(&content);
         Self { content, matches }
     }
+    pub fn new_with_strip_newlines(mut content: String) -> Self {
+        let matches = extract_path_matches(Packed::strip_newlines(&mut content));
+        Self { content, matches }
+    }
+    pub fn does_content_have_newlines(content: &str) -> bool {
+        content.contains('\n')
+    }
+
+    fn strip_newlines(content: &mut String) -> &String {
+        content.retain(|c| c != '\n');
+        content
+    }
 }
 
 impl fmt::Display for Packed {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // writeln!(f, "Content:\n{}", self.content)?;
+        let contains: &str = match Packed::does_content_have_newlines(&self.content) {
+            true => "yes!",
+            false => "no!",
+        };
+
+        writeln!(
+            f,
+            "Content: (contains newlines? : {})\n{}",
+            contains, self.content
+        )?;
         writeln!(f, "Matches:")?;
 
         for m in &self.matches {
@@ -315,4 +336,7 @@ mod tests {
     fn made_up_paths_are_dropped() {
         assert!(found("read notreal.xyz or e.g. whatever").is_empty());
     }
+
+    // #[test]
+    // fn
 }

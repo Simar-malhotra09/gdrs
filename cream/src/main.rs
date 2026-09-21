@@ -9,6 +9,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut i_stderr = String::new();
     if !io::stdin().is_terminal() {
         io::stdin().read_to_string(&mut i_stdin).unwrap();
+        // let lines = io::stdin().lines();
+        // i_stdin = lines.into_iter().map(|l| l.unwrap()).collect();
     } else {
         let args: Vec<String> = std::env::args().skip(1).collect();
         let Some((command, command_args)) = args.split_first() else {
@@ -36,6 +38,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         o_stdin: Packed::new(i_stdin),
         o_stdout: Packed::new(i_stdout),
         o_stderr: Packed::new(i_stderr),
+        // o_stdin: Packed::new_with_strip_newlines(i_stdin),
+        // o_stdout: Packed::new_with_strip_newlines(i_stdout),
+        // o_stderr: Packed::new_with_strip_newlines(i_stderr),
     };
     println!("STDIN\n{}", output.o_stdin);
     println!("STDOUT\n{}", output.o_stdout);
