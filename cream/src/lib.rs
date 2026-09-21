@@ -24,7 +24,7 @@ impl Packed {
     }
 
     fn strip_newlines(content: &mut String) -> &String {
-        content.retain(|c| c != '\n');
+        *content = content.replace('\n', " ");
         content
     }
 }

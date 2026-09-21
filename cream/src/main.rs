@@ -36,12 +36,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         i_stderr = String::from_utf8_lossy(&output.stderr).into_owned();
     }
     let output = Output {
-        o_stdin: Packed::new(i_stdin),
-        o_stdout: Packed::new(i_stdout),
-        o_stderr: Packed::new(i_stderr),
-        // o_stdin: Packed::new_with_strip_newlines(i_stdin),
-        // o_stdout: Packed::new_with_strip_newlines(i_stdout),
-        // o_stderr: Packed::new_with_strip_newlines(i_stderr),
+        // o_stdin: Packed::new(i_stdin),
+        // o_stdout: Packed::new(i_stdout),
+        // o_stderr: Packed::new(i_stderr),
+        o_stdin: Packed::new_with_strip_newlines(i_stdin),
+        o_stdout: Packed::new_with_strip_newlines(i_stdout),
+        o_stderr: Packed::new_with_strip_newlines(i_stderr),
     };
     println!("STDIN\n{}", output.o_stdin);
     println!("STDOUT\n{}", output.o_stdout);
