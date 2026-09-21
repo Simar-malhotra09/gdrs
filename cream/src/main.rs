@@ -9,6 +9,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut i_stderr = String::new();
     if !io::stdin().is_terminal() {
         io::stdin().read_to_string(&mut i_stdin).unwrap();
+        i_stdin = i_stdin.trim_end_matches('\n').to_string();
         // let lines = io::stdin().lines();
         // i_stdin = lines.into_iter().map(|l| l.unwrap()).collect();
     } else {
