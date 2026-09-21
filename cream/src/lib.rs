@@ -1,26 +1,36 @@
 use regex::Regex;
 use std::borrow::Cow;
-use std::fmt;
+use std::fmt::{self, Display, Formatter};
 use std::path::Path;
 use std::sync::LazyLock;
 
+// this should be one 'chunk' of text
+// say, newline delimited for now.
 #[derive(Default)]
 pub struct Packed {
-    pub content: String,
+    pub chunk: String,
     pub matches: Vec<PathMatch>,
 }
 
-impl Packed {
+#[derive(Default)]
+pub struct ChunkPathPairs {
+    pub pairs: Vec<Packed>,
+}
+
+impl ChunkPathPairs {
     pub fn new(content: String) -> Self {
-        let matches = extract_path_matches(&content);
-        Self { content, matches }
+        let items = content
+            .split('\n')
+            .map(|i| Packed::new(i.to_string()))
+            .collect();
+        Self { pairs: items }
     }
-    pub fn new_with_strip_newlines(mut content: String) -> Self {
-        let matches = extract_path_matches(Packed::strip_newlines(&mut content));
-        Self { content, matches }
-    }
-    pub fn does_content_have_newlines(content: &str) -> bool {
-        content.contains('\n')
+    pub fn new_single_chunk(mut content: String) -> Self {
+        let items = ChunkPathPairs::strip_newlines(&mut content)
+            .split('\n')
+            .map(|i| Packed::new(i.to_string()))
+            .collect();
+        Self { pairs: items }
     }
 
     fn strip_newlines(content: &mut String) -> &String {
@@ -29,33 +39,58 @@ impl Packed {
     }
 }
 
-impl fmt::Display for Packed {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let contains: &str = match Packed::does_content_have_newlines(&self.content) {
-            true => "yes!",
-            false => "no!",
-        };
-
-        writeln!(
-            f,
-            "Content: (contains newlines? : {})\n{}",
-            contains, self.content
-        )?;
-        writeln!(f, "Matches:")?;
-
-        for m in &self.matches {
-            writeln!(f, "  {m}")?;
+impl Display for ChunkPathPairs {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        for Packed { chunk, matches } in &self.pairs {
+            writeln!(f, "chunk: {}", chunk)?;
+            writeln!(f, "matches: {:?}", matches)?;
+            writeln!(f, "{}", "-".repeat(10))?;
         }
 
         Ok(())
     }
 }
 
+impl Packed {
+    pub fn new(content: String) -> Self {
+        let matches = extract_path_matches(&content);
+        Self {
+            chunk: content,
+            matches,
+        }
+    }
+    pub fn does_content_have_newlines(content: &str) -> bool {
+        content.contains('\n')
+    }
+}
+
+// impl fmt::Display for Packed {
+//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//         let contains: &str = match Packed::does_content_have_newlines(&self.content) {
+//             true => "yes!",
+//             false => "no!",
+//         };
+//
+//         writeln!(
+//             f,
+//             "Content: (contains newlines? : {})\n{}",
+//             contains, self.content
+//         )?;
+//         writeln!(f, "Matches:")?;
+//
+//         for m in &self.matches {
+//             writeln!(f, "  {m}")?;
+//         }
+//
+//         Ok(())
+//     }
+// }
+
 #[derive(Default)]
 pub struct Output {
-    pub o_stdin: Packed,
-    pub o_stdout: Packed,
-    pub o_stderr: Packed,
+    pub o_stdin: ChunkPathPairs,
+    pub o_stdout: ChunkPathPairs,
+    pub o_stderr: ChunkPathPairs,
 }
 
 #[derive(Debug, PartialEq, Eq)]
