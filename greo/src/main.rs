@@ -12,6 +12,13 @@ struct Packed {
     matches: Vec<PathMatch>,
 }
 
+impl Packed {
+    fn new(content: String) -> Self {
+        let matches = extract_path_matches(&content);
+        Self { content, matches }
+    }
+}
+
 impl fmt::Display for Packed {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // writeln!(f, "Content:\n{}", self.content)?;
@@ -161,18 +168,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // cmd_output.stderr = stderr;
     }
     let output = Output {
-        o_stdin: Packed {
-            matches: extract_path_matches(&i_stdin),
-            content: i_stdin,
-        },
-        o_stdout: Packed {
-            matches: extract_path_matches(&i_stdout),
-            content: i_stdout,
-        },
-        o_stderr: Packed {
-            matches: extract_path_matches(&i_stderr),
-            content: i_stderr,
-        },
+        o_stdin: Packed::new(i_stdin),
+        o_stdout: Packed::new(i_stdout),
+        o_stderr: Packed::new(i_stderr),
     };
     println!("STDIN\n{}", output.o_stdin);
     println!("STDOUT\n{}", output.o_stdout);
