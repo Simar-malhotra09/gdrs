@@ -19,6 +19,13 @@ pub struct Packed {
     pub matches: Vec<PathMatch>,
 }
 
+impl Packed {
+    pub fn new(content: String) -> Self {
+        let matches = extract_path_matches(&content);
+        Self { content, matches }
+    }
+}
+
 impl fmt::Display for Packed {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // writeln!(f, "Content:\n{}", self.content)?;
@@ -33,9 +40,9 @@ impl fmt::Display for Packed {
 }
 #[derive(Default)]
 pub struct Output {
-    // pub o_stdin: Packed,
+    pub o_stdin: Packed,
     pub o_stdout: Packed,
-    // pub o_stderr: Packed,
+    pub o_stderr: Packed,
 }
 
 #[derive(Debug, PartialEq, Eq)]
