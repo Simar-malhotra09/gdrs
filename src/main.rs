@@ -14,7 +14,7 @@ use ratatui::widgets::{
 use std::io::{self, IsTerminal, Read};
 use std::process::Command;
 
-use cream::{Output, Packed, PathMatch};
+use cream::{ChunkPathPairs, Output, Packed, PathMatch};
 
 const HEADER_STYLE: Style = Style::new().fg(SLATE.c100).bg(BLUE.c800);
 const NORMAL_ROW_BG: Color = SLATE.c950;
