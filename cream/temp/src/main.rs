@@ -7,7 +7,7 @@ use std::sync::LazyLock;
 #[derive(Debug, PartialEq, Eq)]
 #[allow(dead_code)]
 struct PathMatch {
-    path: ,
+    path: String,
     line_num: Option<u32>,
     col_num: Option<u32>,
     start: usize,
@@ -93,6 +93,7 @@ fn extract_path_matches(input: &str) -> Vec<PathMatch> {
 
 fn main() {
     let mut text = String::new();
+    let width: u16 = 100;
     if !io::stdin().is_terminal() {
         io::stdin().read_to_string(&mut text).unwrap();
     } else {

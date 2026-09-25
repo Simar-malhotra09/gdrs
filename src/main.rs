@@ -1,6 +1,5 @@
 use color_eyre::Result;
 use crossterm::event::{self, KeyCode, KeyEvent};
-use ratatui::DefaultTerminal;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::palette::tailwind::{BLUE, SLATE};
@@ -9,12 +8,13 @@ use ratatui::symbols;
 use ratatui::text::Line;
 use ratatui::widgets::{
     Block, Borders, HighlightSpacing, List, ListItem, ListState, Paragraph, StatefulWidget, Tabs,
-    Widget,
+    Widget, Wrap,
 };
+use ratatui::{DefaultTerminal, Frame};
 use std::io::{self, IsTerminal, Read};
 use std::process::Command;
 
-use cream::{ChunkPathPairs, Output, Packed, PathMatch};
+use cream::{ChunkPathPairs, Output, PathMatch};
 
 const HEADER_STYLE: Style = Style::new().fg(SLATE.c100).bg(BLUE.c800);
 const NORMAL_ROW_BG: Color = SLATE.c950;
@@ -52,9 +52,9 @@ fn main() -> Result<()> {
     }
 
     let output = Output {
-        o_stdin: Packed::new(i_stdin),
-        o_stdout: Packed::new(i_stdout),
-        o_stderr: Packed::new(i_stderr),
+        o_stdin: ChunkPathPairs::new(i_stdin),
+        o_stdout: ChunkPathPairs::new(i_stdout),
+        o_stderr: ChunkPathPairs::new(i_stderr),
     };
 
     let start_tab = if piped {
@@ -114,7 +114,7 @@ impl App {
         }
     }
 
-    fn current_packed(&self) -> &Packed {
+    fn current_tab_items(&self) -> &ChunkPathPairs {
         match self.current_tab {
             TabKind::Stdin => &self.output.o_stdin,
             TabKind::Stdout => &self.output.o_stdout,
@@ -130,12 +130,17 @@ impl App {
 impl App {
     fn run(mut self, terminal: &mut DefaultTerminal) -> Result<()> {
         while !self.should_exit {
-            terminal.draw(|frame| frame.render_widget(&mut self, frame.area()))?;
+            terminal.draw(|frame| self.render(frame))?;
+            // terminal.draw(|frame| frame.render_widget(&mut self, frame.area()))?;
             if let Some(key) = event::read()?.as_key_press_event() {
                 self.handle_key(key);
             }
         }
         Ok(())
+    }
+
+    fn render(&mut self, frame: &mut Frame) {
+        frame.render_widget(self, frame.area());
     }
 
     fn handle_key(&mut self, key: KeyEvent) {
@@ -151,24 +156,22 @@ impl App {
             _ => {}
         }
     }
-
-    fn edit_file(&mut self) {
-        // TODO: open the selected match in $EDITOR
-        self.current_state().select_first();
-    }
 }
 
 impl Widget for &mut App {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let [tabs_area, list_area, footer_area] = area.layout(&Layout::vertical([
-            Constraint::Length(1),
-            Constraint::Fill(1),
-            Constraint::Length(1),
-        ]));
+        let [tabs_area, list_area, list_extra_area, footer_area] =
+            area.layout(&Layout::vertical([
+                Constraint::Length(1),
+                Constraint::Fill(3),
+                Constraint::Fill(1),
+                Constraint::Length(1),
+            ]));
 
         self.render_tabs(tabs_area, buf);
         self.render_list(list_area, buf);
-        App::render_footer(footer_area, buf);
+        self.render_list_content(list_area.width, list_extra_area, buf);
+        self.render_footer(footer_area, list_area.width, buf);
     }
 }
 
@@ -183,10 +186,12 @@ impl App {
             .render(area, buf);
     }
 
-    fn render_footer(area: Rect, buf: &mut Buffer) {
-        Paragraph::new("←/→ switch tab · ↑/↓ move · g/G top/bottom · Enter open · q quit")
-            .centered()
-            .render(area, buf);
+    fn render_footer(&mut self, area: Rect, list_width: u16, buf: &mut Buffer) {
+        Paragraph::new(format!(
+            "←/→ switch tab · ↑/↓ move · g/G top/bottom · Enter open · q quit, {list_width}"
+        ))
+        .centered()
+        .render(area, buf);
     }
 
     fn render_list(&mut self, area: Rect, buf: &mut Buffer) {
@@ -199,11 +204,15 @@ impl App {
             .bg(NORMAL_ROW_BG);
 
         let items: Vec<ListItem> = self
-            .current_packed()
-            .matches
+            .current_tab_items()
+            .pairs
             .iter()
             .enumerate()
-            .map(|(idx, m)| match_item(m).bg(alternate_colors(idx)))
+            .map(|(idx, packed)| {
+                ListItem::new(format_item(&packed.path_match))
+                    .fg(SLATE.c200)
+                    .bg(alternate_colors(idx))
+            })
             .collect();
 
         let list = List::new(items)
@@ -214,17 +223,40 @@ impl App {
 
         StatefulWidget::render(list, area, buf, self.current_state());
     }
+
+    fn render_list_content(&mut self, list_width: u16, area: Rect, buf: &mut Buffer) {
+        let Some(idx) = self.current_state().selected() else {
+            return;
+        };
+
+        let info = format_item(&self.current_tab_items().pairs[idx].path_match);
+
+        if info.chars().count() <= list_width as usize {
+            return;
+        }
+
+        Paragraph::new(info)
+            .block(Block::new().title("Full text "))
+            .wrap(Wrap { trim: false })
+            .render(area, buf);
+    }
 }
 
-fn match_item(value: &PathMatch) -> ListItem<'static> {
+impl App {
+    fn edit_file(&mut self) {
+        // TODO: open the selected match in $EDITOR
+        self.current_state().select_first();
+    }
+}
+fn format_item(value: &PathMatch) -> String {
     let dash = |n: Option<u32>| n.map_or("-".to_string(), |n| n.to_string());
-    let line = format!(
+
+    format!(
         "Path: {}, Line: {}, Col: {}",
         value.path,
         dash(value.line_num),
         dash(value.col_num),
-    );
-    ListItem::new(line).fg(SLATE.c200)
+    )
 }
 
 const fn alternate_colors(i: usize) -> Color {

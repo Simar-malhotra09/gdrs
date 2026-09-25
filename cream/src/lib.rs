@@ -9,7 +9,7 @@ use std::sync::LazyLock;
 #[derive(Default)]
 pub struct Packed {
     pub chunk: String,
-    pub matches: Vec<PathMatch>,
+    pub path_match: PathMatch,
 }
 
 #[derive(Default)]
@@ -19,9 +19,11 @@ pub struct ChunkPathPairs {
 
 impl ChunkPathPairs {
     pub fn new(content: String) -> Self {
-        let items = content
-            .split('\n')
-            .map(|i| Packed::new(i.to_string()))
+        let items = content // items expected to be Vec<Packed>
+            .split('\n') // split by line
+            .map(|i| Packed::new(i.to_string())) //inner returns Vec<Packed>, so I have
+            //Vec<Vec<Packed>>
+            .flatten()
             .collect();
         Self { pairs: items }
     }
@@ -29,6 +31,7 @@ impl ChunkPathPairs {
         let items = ChunkPathPairs::strip_newlines(&mut content)
             .split('\n')
             .map(|i| Packed::new(i.to_string()))
+            .flatten()
             .collect();
         Self { pairs: items }
     }
@@ -41,9 +44,9 @@ impl ChunkPathPairs {
 
 impl Display for ChunkPathPairs {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        for Packed { chunk, matches } in &self.pairs {
+        for Packed { chunk, path_match } in &self.pairs {
             writeln!(f, "chunk: {}", chunk)?;
-            writeln!(f, "matches: {:?}", matches)?;
+            writeln!(f, "matches: {:?}", path_match)?;
             writeln!(f, "{}", "-".repeat(10))?;
         }
 
@@ -52,39 +55,21 @@ impl Display for ChunkPathPairs {
 }
 
 impl Packed {
-    pub fn new(content: String) -> Self {
+    pub fn new(content: String) -> Vec<Self> {
         let matches = extract_path_matches(&content);
-        Self {
-            chunk: content,
-            matches,
+        let mut res = Vec::<Packed>::new();
+        for path_match in matches {
+            res.push(Self {
+                chunk: content.clone(),
+                path_match,
+            })
         }
+        res
     }
     pub fn does_content_have_newlines(content: &str) -> bool {
         content.contains('\n')
     }
 }
-
-// impl fmt::Display for Packed {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         let contains: &str = match Packed::does_content_have_newlines(&self.content) {
-//             true => "yes!",
-//             false => "no!",
-//         };
-//
-//         writeln!(
-//             f,
-//             "Content: (contains newlines? : {})\n{}",
-//             contains, self.content
-//         )?;
-//         writeln!(f, "Matches:")?;
-//
-//         for m in &self.matches {
-//             writeln!(f, "  {m}")?;
-//         }
-//
-//         Ok(())
-//     }
-// }
 
 #[derive(Default)]
 pub struct Output {
@@ -93,7 +78,7 @@ pub struct Output {
     pub o_stderr: ChunkPathPairs,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Default, Debug, PartialEq, Eq)]
 pub struct PathMatch {
     pub path: String,
     pub line_num: Option<u32>,
